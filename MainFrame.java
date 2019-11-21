@@ -25,8 +25,9 @@ public class MainFrame extends JFrame{
 	// Объект диалогового окна для выбора файлов
 	private JFileChooser fileChooser = null; 
 	// Пункты меню private
-	JCheckBoxMenuItem showAxisMenuItem;
+	private JCheckBoxMenuItem showAxisMenuItem;
 	private JCheckBoxMenuItem showMarkersMenuItem;
+	private JCheckBoxMenuItem showGraphicsSize;
 	// Компонент-отображатель графика 
 	private GraphicsDisplay display = new GraphicsDisplay();
 	// Флаг, указывающий на загруженность данных графика
@@ -86,11 +87,19 @@ public class MainFrame extends JFrame{
 		}; 
 		showMarkersMenuItem = new JCheckBoxMenuItem(showMarkersAction); 
 		graphicsMenu.add(showMarkersMenuItem);
-		// Элемент по умолчанию включен (отмечен флажком) 
 		showMarkersMenuItem.setSelected(true);
 		// Зарегистрировать обработчик событий, связанных с меню "График" 
 		graphicsMenu.addMenuListener(new GraphicsMenuListener());
 		// Установить GraphicsDisplay в цент граничной компоновки 
+		
+		Action showGraphicsSizeAction = new AbstractAction("Показать замкнутую площадь") {
+			public void actionPerformed(ActionEvent event) {
+				display.setShowZone(showGraphicsSize.isSelected()); 
+			}
+		};
+		showGraphicsSize = new JCheckBoxMenuItem(showGraphicsSizeAction);
+		graphicsMenu.add(showGraphicsSize);
+		showGraphicsSize.setSelected(true);
 		getContentPane().add(display, BorderLayout.CENTER); 
 	}
 	
@@ -114,6 +123,9 @@ public class MainFrame extends JFrame{
 			if (graphicsData!=null && graphicsData.length>0){ 
 				// Да - установить флаг загруженности данных
 				fileLoaded = true;
+				for(int j=0; j<graphicsData.length; j++){
+					graphicsData[j][1] -= 5;
+				}
 				// Вызывать метод отображения графика 
 				display.showGraphics(graphicsData); 
 			} 
@@ -144,6 +156,7 @@ public class MainFrame extends JFrame{
 			// Доступность или недоступность элементов меню "График" определяется загруженностью данных
 			showAxisMenuItem.setEnabled(fileLoaded); 
 			showMarkersMenuItem.setEnabled(fileLoaded); 
+			showGraphicsSize.setEnabled(fileLoaded); 
 		} 
 		
 		public void menuDeselected(MenuEvent e){ 

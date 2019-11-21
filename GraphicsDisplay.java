@@ -23,6 +23,7 @@ public class GraphicsDisplay extends JPanel{
 	// Флаговые переменные, задающие правила отображения графика
 	private boolean showAxis = true; 
 	private boolean showMarkers = true; 
+	private boolean showZone = true; 
 	// Границы диапазона пространства, подлежащего отображению
 	private double minX;
 	private double maxX; 
@@ -30,6 +31,7 @@ public class GraphicsDisplay extends JPanel{
 	private double maxY; 
 	// Используемый масштаб отображения 
 	private double scale; 
+	private Double[][] zone_points;
 	// Различные стили черчения линий
 	private BasicStroke graphicsStroke; 
 	private BasicStroke axisStroke;
@@ -60,6 +62,10 @@ public class GraphicsDisplay extends JPanel{
 	} 
 	public void setShowMarkers(boolean showMarkers){
 		this.showMarkers = showMarkers; 
+		repaint();
+	}
+	public void setShowZone(boolean showZone){
+		this.showZone = showZone; 
 		repaint();
 	}
 	public void paintComponent(Graphics g){
@@ -120,6 +126,11 @@ public class GraphicsDisplay extends JPanel{
 		// Затем (если нужно) отображаются маркеры точек, по которым строился график. 
 		if (showMarkers){
 			paintMarkers(canvas); 
+		}
+		if(showZone){
+			paintZone(canvas);
+			double Square = calculate_square();
+			paintLabel(canvas, Square);
 		}
 		// Шаг 9 - Восстановить старые настройки холста
 		canvas.setFont(oldFont);
@@ -242,7 +253,60 @@ public class GraphicsDisplay extends JPanel{
 			canvas.drawString("x", (float)(labelPos.getX() - bounds.getWidth() - 10), (float)(labelPos.getY() + bounds.getY()));
 		}
 	}
-			
+	
+	private double calculate_square(){
+		double Square = 0;
+		for(int i=1; i< zone_points.length; i++){
+			if(zone_points[i][0] == null){ //в последней части этой переменной могут стоять сплошные null
+				break;
+			}
+			Square += Math.abs(zone_points[i-1][1]+zone_points[i][1])/2*Math.abs(zone_points[i][0]-zone_points[i-1][0]);
+		}
+		return Square;
+	}
+	protected void paintZone(Graphics2D canvas){
+		zone_points = find_zone_points();
+		GeneralPath graphics = new GeneralPath();
+		Point2D.Double point = xyToPoint(zone_points[0][0], 0);
+		graphics.moveTo(point.getX(), point.getY());
+		int iter = 0;
+		for(int i=0; i< zone_points.length; i++){
+			if(zone_points[i][0] == null){ //в последней части этой переменной могут стоять сплошные null
+				break;
+			}
+			point = xyToPoint(zone_points[i][0], zone_points[i][1]);
+			graphics.lineTo(point.getX(), point.getY()); 
+			iter += 1;
+		}
+		point = xyToPoint(zone_points[iter-1][0], 0);
+		graphics.lineTo(point.getX(), point.getY());
+		canvas.setColor(Color.BLUE);
+		canvas.fill(graphics);
+	}
+	
+	private void paintLabel(Graphics2D canvas, double number){
+		Double temp = number;
+		String str = temp.toString();
+		double[] center = new double[2];
+		center[0] = center[1] = 0;
+		int iter = 0;
+		for(int i=0; i<zone_points.length; i++){
+			if(zone_points[i][0] == null){ //в последней части этой переменной могут стоять сплошные null
+				break;
+			}
+			center[0] += zone_points[i][0];
+			center[1] += zone_points[i][1];
+			iter += 1;
+		}
+		center[0] /= iter-1;
+		center[1] /= iter-1;
+		FontRenderContext context = canvas.getFontRenderContext();
+		Rectangle2D bounds = axisFont.getStringBounds(str, context);
+		Point2D.Double labelPos = xyToPoint(center[0], center[1]); 
+		// Вывести надпись в точке с вычисленными координатами 
+		canvas.setColor(Color.BLACK);
+		canvas.drawString(str, (float)(labelPos.getX() - bounds.getWidth()/2), (float)(labelPos.getY() - bounds.getHeight()/2));
+	}
 	protected Point2D.Double xyToPoint(double x, double y){ 
 		// Вычисляем смещение X от самой левой точки (minX) 
 		double deltaX = x - minX; 
@@ -278,6 +342,32 @@ public class GraphicsDisplay extends JPanel{
 			}
 		}
 		return true;
+	}
+	
+	private Double[][] find_zone_points(){
+		Double[][] zone_points = new Double[graphicsData.length][2];
+		int j = 0;
+		short side = (short)graphicsData[0][1].compareTo((double)0); //1 - выше Ох  -1 - ниже Ox
+		short prev;
+		boolean to_write = false;
+		for(int i=0; i<graphicsData.length; i++){
+			prev = side;
+			side = (short)graphicsData[i][1].compareTo((double)0);
+			if(prev != side){
+				if(!to_write){
+					to_write = true;
+				}
+				else{
+					to_write = false;
+				}
+			}
+			if(to_write){
+				zone_points[j][0] = graphicsData[i][0];
+				zone_points[j][1] = graphicsData[i][1];
+				j += 1;
+			}
+		}
+		return zone_points;
 	}
 }
 	
