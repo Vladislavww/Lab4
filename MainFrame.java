@@ -7,6 +7,7 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import javax.swing.AbstractAction; 
 import javax.swing.Action; 
@@ -27,7 +28,8 @@ public class MainFrame extends JFrame{
 	// Пункты меню private
 	private JCheckBoxMenuItem showAxisMenuItem;
 	private JCheckBoxMenuItem showMarkersMenuItem;
-	private JCheckBoxMenuItem showGraphicsSize;
+	private JCheckBoxMenuItem showGraphicsSizeMenuItem;
+	private JCheckBoxMenuItem rotateSystemMenuItem;
 	// Компонент-отображатель графика 
 	private GraphicsDisplay display = new GraphicsDisplay();
 	// Флаг, указывающий на загруженность данных графика
@@ -94,12 +96,20 @@ public class MainFrame extends JFrame{
 		
 		Action showGraphicsSizeAction = new AbstractAction("Показать замкнутую площадь") {
 			public void actionPerformed(ActionEvent event) {
-				display.setShowZone(showGraphicsSize.isSelected()); 
+				display.setShowZone(showGraphicsSizeMenuItem.isSelected()); 
 			}
 		};
-		showGraphicsSize = new JCheckBoxMenuItem(showGraphicsSizeAction);
-		graphicsMenu.add(showGraphicsSize);
-		showGraphicsSize.setSelected(true);
+		showGraphicsSizeMenuItem = new JCheckBoxMenuItem(showGraphicsSizeAction);
+		graphicsMenu.add(showGraphicsSizeMenuItem);
+		showGraphicsSizeMenuItem.setSelected(false);
+		Action rotateSystemAction = new AbstractAction("Повернуть оси на 90 градусов влево") {
+			public void actionPerformed(ActionEvent event) {
+				display.setRotateSystem(rotateSystemMenuItem.isSelected()); 
+			}
+		};
+		rotateSystemMenuItem = new JCheckBoxMenuItem(rotateSystemAction);
+		graphicsMenu.add(rotateSystemMenuItem);
+		rotateSystemMenuItem.setSelected(false);
 		getContentPane().add(display, BorderLayout.CENTER); 
 	}
 	
@@ -110,10 +120,10 @@ public class MainFrame extends JFrame{
 			/* Шаг 2 - Зная объ?м данных в потоке ввода можно вычислить, * сколько памяти нужно зарезервировать в массиве: * Всего байт в потоке - in.available() байт; * Размер одного числа Double - Double.SIZE бит, или Double.SIZE/8 байт; * Так как числа записываются парами, то число пар меньше в 2 раза */ 
 			Double[][] graphicsData = new Double[in.available()/(Double.SIZE/8)/2][]; 
 			// Шаг 3 - Цикл чтения данных (пока в потоке есть данные)
-			int i = 0; 
+			int i = 0;
 			while (in.available()>0){
 				// Первой из потока читается координата точки X 
-				Double x = in.readDouble(); 
+				Double x = in.readDouble();
 				// Затем - значение графика Y в точке X 
 				Double y = in.readDouble(); 
 				// Прочитанная пара координат добавляется в массив 
@@ -123,9 +133,6 @@ public class MainFrame extends JFrame{
 			if (graphicsData!=null && graphicsData.length>0){ 
 				// Да - установить флаг загруженности данных
 				fileLoaded = true;
-				for(int j=0; j<graphicsData.length; j++){
-					graphicsData[j][1] -= 5;
-				}
 				// Вызывать метод отображения графика 
 				display.showGraphics(graphicsData); 
 			} 
@@ -156,7 +163,8 @@ public class MainFrame extends JFrame{
 			// Доступность или недоступность элементов меню "График" определяется загруженностью данных
 			showAxisMenuItem.setEnabled(fileLoaded); 
 			showMarkersMenuItem.setEnabled(fileLoaded); 
-			showGraphicsSize.setEnabled(fileLoaded); 
+			showGraphicsSizeMenuItem.setEnabled(fileLoaded); 
+			rotateSystemMenuItem.setEnabled(fileLoaded);
 		} 
 		
 		public void menuDeselected(MenuEvent e){ 

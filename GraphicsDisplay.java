@@ -23,7 +23,8 @@ public class GraphicsDisplay extends JPanel{
 	// Флаговые переменные, задающие правила отображения графика
 	private boolean showAxis = true; 
 	private boolean showMarkers = true; 
-	private boolean showZone = true; 
+	private boolean showZone = false; 
+	boolean rotateSystem = false;
 	// Границы диапазона пространства, подлежащего отображению
 	private double minX;
 	private double maxX; 
@@ -66,6 +67,10 @@ public class GraphicsDisplay extends JPanel{
 	}
 	public void setShowZone(boolean showZone){
 		this.showZone = showZone; 
+		repaint();
+	}
+	public void setRotateSystem(boolean rotateSystem){
+		this.rotateSystem = rotateSystem;
 		repaint();
 	}
 	public void paintComponent(Graphics g){
@@ -118,6 +123,7 @@ public class GraphicsDisplay extends JPanel{
 		// Шаг 8 - В нужном порядке вызвать методы отображения элементов графика 
 		// Порядок вызова методов имеет значение, т.к. предыдущий рисунок будет затираться последующим
 		// Первыми (если нужно) отрисовываются оси координат. 
+		func_rotateSystem(canvas);
 		if (showAxis){
 			paintAxis(canvas); 
 		}
@@ -132,6 +138,7 @@ public class GraphicsDisplay extends JPanel{
 			double Square = calculate_square();
 			paintLabel(canvas, Square);
 		}
+		
 		// Шаг 9 - Восстановить старые настройки холста
 		canvas.setFont(oldFont);
 		canvas.setPaint(oldPaint);
@@ -298,6 +305,9 @@ public class GraphicsDisplay extends JPanel{
 			center[1] += zone_points[i][1];
 			iter += 1;
 		}
+		if(iter <= 1){
+			return;
+		}
 		center[0] /= iter-1;
 		center[1] /= iter-1;
 		FontRenderContext context = canvas.getFontRenderContext();
@@ -368,6 +378,15 @@ public class GraphicsDisplay extends JPanel{
 			}
 		}
 		return zone_points;
+	}
+	
+	private void func_rotateSystem(Graphics2D canvas){
+		if(rotateSystem == true){
+			canvas.translate(getSize().getWidth()*0.2, getSize().getHeight()*1.1);
+			canvas.rotate(Math.PI/2*3);
+		}
+		else{
+		}
 	}
 }
 	
